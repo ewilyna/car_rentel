@@ -1,0 +1,148 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}История аренды - AutoRent{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'profile' %}">Личный кабинет</a></li>
+                    <li class="breadcrumb-item active">История аренды</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold">История аренды</h1>
+        </div>
+    </div>
+
+    <!-- Rentals List -->
+    <div class="row">
+        <div class="col-12">
+            {% if rentals %}
+                {% for rental in rentals %}
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <!-- Car Image -->
+                                <div class="col-md-2">
+                                    {% if rental.car.images.first %}
+                                        <img src="{{ rental.car.images.first.image.url }}" 
+                                             class="img-fluid rounded" 
+                                             alt="{{ rental.car.brand }} {{ rental.car.model }}">
+                                    {% else %}
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 80px;">
+                                            <i class="fas fa-car fa-2x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Car Info -->
+                                <div class="col-md-3">
+                                    <h5 class="mb-1">{{ rental.car.brand }} {{ rental.car.model }}</h5>
+                                    <p class="text-muted mb-0">{{ rental.car.year }} г.</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-gas-pump me-1"></i>{{ rental.car.get_fuel_type_display }}
+                                        <i class="fas fa-cogs ms-2 me-1"></i>{{ rental.car.get_transmission_display }}
+                                    </small>
+                                </div>
+                                
+                                <!-- Rental Period -->
+                                <div class="col-md-2">
+                                    <h6 class="text-primary mb-1">Период аренды</h6>
+                                    <p class="mb-0">{{ rental.start_date|date:"d.m.Y" }}</p>
+                                    <p class="mb-0">{{ rental.end_date|date:"d.m.Y" }}</p>
+                                    <small class="text-muted">{{ rental.duration_days }} дн.</small>
+                                </div>
+                                
+                                <!-- Price -->
+                                <div class="col-md-2">
+                                    <h6 class="text-primary mb-1">Стоимость</h6>
+                                    <h5 class="text-success mb-0">{{ rental.total_price|floatformat:0 }} ₽</h5>
+                                </div>
+                                
+                                <!-- Status -->
+                                <div class="col-md-2">
+                                    <h6 class="text-primary mb-1">Статус</h6>
+                                    {% if rental.status == 'confirmed' %}
+                                        <span class="badge bg-success fs-6">Подтверждена</span>
+                                    {% elif rental.status == 'pending' %}
+                                        <span class="badge bg-warning fs-6">Ожидает</span>
+                                    {% elif rental.status == 'active' %}
+                                        <span class="badge bg-primary fs-6">Активна</span>
+                                    {% elif rental.status == 'completed' %}
+                                        <span class="badge bg-secondary fs-6">Завершена</span>
+                                    {% elif rental.status == 'cancelled' %}
+                                        <span class="badge bg-danger fs-6">Отменена</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Date -->
+                                <div class="col-md-1">
+                                    <small class="text-muted">
+                                        {{ rental.created_at|date:"d.m.Y" }}<br>
+                                        {{ rental.created_at|date:"H:i" }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <!-- Summary -->
+                <div class="card shadow-sm bg-light">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <h4 class="text-primary">{{ rentals.count }}</h4>
+                                <p class="text-muted mb-0">Всего аренд</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h4 class="text-success">
+                                    {% widthratio rentals|length 1 1 as total_rentals %}
+                                    {% for rental in rentals %}
+                                        {% if forloop.first %}
+                                            {% widthratio 0 1 1 as total_spent %}
+                                        {% endif %}
+                                        {% widthratio total_spent 1 1 as temp %}
+                                        {% widthratio temp|add:rental.total_price 1 1 as total_spent %}
+                                    {% endfor %}
+                                    {{ total_spent|default:0|floatformat:0 }} ₽
+                                </h4>
+                                <p class="text-muted mb-0">Общая сумма</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h4 class="text-info">
+                                    {% for rental in rentals %}
+                                        {% if forloop.first %}
+                                            {% widthratio 0 1 1 as total_days %}
+                                        {% endif %}
+                                        {% widthratio total_days 1 1 as temp %}
+                                        {% widthratio temp|add:rental.duration_days 1 1 as total_days %}
+                                    {% endfor %}
+                                    {{ total_days|default:0 }}
+                                </h4>
+                                <p class="text-muted mb-0">Дней аренды</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-history fa-4x text-muted mb-4"></i>
+                        <h3 class="text-muted">История аренды пуста</h3>
+                        <p class="text-muted mb-4">Вы еще не арендовали автомобили</p>
+                        <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-car me-2"></i>Выбрать автомобиль
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

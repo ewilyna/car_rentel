@@ -1,0 +1,179 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ car.brand }} {{ car.model }} - AutoRent{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Каталог</a></li>
+            <li class="breadcrumb-item active">{{ car.brand }} {{ car.model }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Car Images -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    {% if car.images.all %}
+                        <div id="carCarousel" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                {% for image in car.images.all %}
+                                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                        <img src="{{ image.image.url }}" class="d-block w-100 car-detail-image" alt="{{ car.brand }} {{ car.model }}">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if car.images.count > 1 %}
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon"></span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon"></span>
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                            <i class="fas fa-car fa-5x text-muted"></i>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Car Info and Booking -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top">
+                <div class="card-body">
+                    <h1 class="h3 fw-bold mb-3">{{ car.brand }} {{ car.model }}</h1>
+                    
+                    <!-- Car Specs -->
+                    <div class="car-specs mb-4">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="spec-item">
+                                    <i class="fas fa-calendar text-primary me-2"></i>
+                                    <span class="fw-semibold">Год:</span> {{ car.year }}
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="spec-item">
+                                    <i class="fas fa-road text-primary me-2"></i>
+                                    <span class="fw-semibold">Пробег:</span> {{ car.mileage|floatformat:0 }} км
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="spec-item">
+                                    <i class="fas fa-gas-pump text-primary me-2"></i>
+                                    <span class="fw-semibold">Топливо:</span> {{ car.get_fuel_type_display }}
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="spec-item">
+                                    <i class="fas fa-cogs text-primary me-2"></i>
+                                    <span class="fw-semibold">КПП:</span> {{ car.get_transmission_display }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing -->
+                    <div class="pricing mb-4">
+                        <h4 class="text-primary mb-3">Цены на аренду</h4>
+                        <div class="price-list">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>За день:</span>
+                                <span class="fw-bold">{{ car.price_per_day|floatformat:0 }} ₽</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>За неделю:</span>
+                                <span class="fw-bold">{{ car.price_per_week|floatformat:0 }} ₽</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>За месяц:</span>
+                                <span class="fw-bold">{{ car.price_per_month|floatformat:0 }} ₽</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booking Form -->
+                    {% if user.is_authenticated %}
+                        <form method="post" action="{% url 'add_to_cart' car.pk %}" class="booking-form">
+                            {% csrf_token %}
+                            <h5 class="mb-3">Забронировать автомобиль</h5>
+                            
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">Дата начала аренды</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">Дата окончания аренды</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <small>Автомобиль будет добавлен в корзину для последующего оформления</small>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                <i class="fas fa-shopping-cart me-2"></i>Добавить в корзину
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="text-center">
+                            <p class="text-muted mb-3">Для аренды автомобиля необходимо войти в систему</p>
+                            <a href="{% url 'login' %}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-sign-in-alt me-2"></i>Войти
+                            </a>
+                            <a href="{% url 'register' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-user-plus me-2"></i>Регистрация
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Car Description -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="mb-4">Описание автомобиля</h3>
+                    <p class="lead">{{ car.description }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set minimum date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (startDateInput) {
+        startDateInput.min = today;
+        startDateInput.addEventListener('change', function() {
+            endDateInput.min = this.value;
+        });
+    }
+    
+    if (endDateInput) {
+        endDateInput.min = today;
+    }
+});
+</script>
+{% endblock %}
+

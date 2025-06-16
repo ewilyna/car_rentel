@@ -1,0 +1,246 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Личный кабинет - AutoRent{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6 fw-bold">Личный кабинет</h1>
+            <p class="text-muted">Добро пожаловать, {{ user.username }}!</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Info and Balance -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-user-circle me-2"></i>Информация о профиле
+                    </h5>
+                    
+                    <div class="mb-3">
+                        <strong>Имя пользователя:</strong> {{ user.username }}
+                    </div>
+                    
+                    {% if user.email %}
+                        <div class="mb-3">
+                            <strong>Email:</strong> {{ user.email }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <strong>Дата регистрации:</strong> {{ user.date_joined|date:"d.m.Y" }}
+                    </div>
+                    
+                    <!-- Balance -->
+                    <div class="balance-section">
+                        <h6 class="text-primary">Баланс счета</h6>
+                        <div class="h3 text-success mb-3">
+                            <i class="fas fa-wallet me-2"></i>{{ user.balance|floatformat:0 }} ₽
+                        </div>
+                        
+                        <!-- Top up form -->
+                        <form method="post" action="{% url 'top_up_balance' %}" class="mb-3">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="amount" placeholder="Сумма" min="1" required>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-plus me-1"></i>Пополнить
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-shopping-cart me-2"></i>Корзина
+                        {% if cart_items %}
+                            <span class="badge bg-primary">{{ cart_items.count }}</span>
+                        {% endif %}
+                    </h5>
+                    
+                    {% if cart_items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Автомобиль</th>
+                                        <th>Период аренды</th>
+                                        <th>Стоимость</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in cart_items %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if item.car.images.first %}
+                                                        <img src="{{ item.car.images.first.image.url }}" 
+                                                             class="rounded me-3" style="width: 60px; height: 40px; object-fit: cover;" 
+                                                             alt="{{ item.car.brand }} {{ item.car.model }}">
+                                                    {% endif %}
+                                                    <div>
+                                                        <strong>{{ item.car.brand }} {{ item.car.model }}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{ item.car.year }} г.</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <strong>{{ item.start_date|date:"d.m.Y" }} - {{ item.end_date|date:"d.m.Y" }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ item.duration_days }} дн.</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <strong class="text-primary">{{ item.total_price|floatformat:0 }} ₽</strong>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'remove_from_cart' item.pk %}" 
+                                                   class="btn btn-sm btn-outline-danger"
+                                                   onclick="return confirm('Удалить из корзины?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-active">
+                                        <th colspan="2">Итого:</th>
+                                        <th class="text-primary">{{ cart_total|floatformat:0 }} ₽</th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if user.balance < cart_total %}
+                                    <div class="alert alert-warning mb-0">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Недостаточно средств на балансе
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <a href="{% url 'checkout' %}" 
+                                   class="btn btn-primary btn-lg {% if user.balance < cart_total %}disabled{% endif %}">
+                                    <i class="fas fa-credit-card me-2"></i>Оформить аренду
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Корзина пуста</h5>
+                            <p class="text-muted">Добавьте автомобили для аренды</p>
+                            <a href="{% url 'home' %}" class="btn btn-primary">
+                                <i class="fas fa-car me-2"></i>Выбрать автомобиль
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Rentals -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history me-2"></i>Последние аренды
+                        </h5>
+                        <a href="{% url 'purchase_history' %}" class="btn btn-outline-primary btn-sm">
+                            Вся история
+                        </a>
+                    </div>
+                    
+                    {% if rentals %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Автомобиль</th>
+                                        <th>Период</th>
+                                        <th>Стоимость</th>
+                                        <th>Статус</th>
+                                        <th>Дата заказа</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rental in rentals|slice:":5" %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if rental.car.images.first %}
+                                                        <img src="{{ rental.car.images.first.image.url }}" 
+                                                             class="rounded me-3" style="width: 60px; height: 40px; object-fit: cover;" 
+                                                             alt="{{ rental.car.brand }} {{ rental.car.model }}">
+                                                    {% endif %}
+                                                    <div>
+                                                        <strong>{{ rental.car.brand }} {{ rental.car.model }}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{ rental.car.year }} г.</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {{ rental.start_date|date:"d.m.Y" }} - {{ rental.end_date|date:"d.m.Y" }}
+                                                <br>
+                                                <small class="text-muted">{{ rental.duration_days }} дн.</small>
+                                            </td>
+                                            <td>
+                                                <strong>{{ rental.total_price|floatformat:0 }} ₽</strong>
+                                            </td>
+                                            <td>
+                                                {% if rental.status == 'confirmed' %}
+                                                    <span class="badge bg-success">Подтверждена</span>
+                                                {% elif rental.status == 'pending' %}
+                                                    <span class="badge bg-warning">Ожидает</span>
+                                                {% elif rental.status == 'active' %}
+                                                    <span class="badge bg-primary">Активна</span>
+                                                {% elif rental.status == 'completed' %}
+                                                    <span class="badge bg-secondary">Завершена</span>
+                                                {% elif rental.status == 'cancelled' %}
+                                                    <span class="badge bg-danger">Отменена</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ rental.created_at|date:"d.m.Y H:i" }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">История аренды пуста</h5>
+                            <p class="text-muted">Вы еще не арендовали автомобили</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

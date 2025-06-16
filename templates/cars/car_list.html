@@ -1,0 +1,255 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Каталог автомобилей - AutoRent{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold text-center mb-3">Каталог автомобилей</h1>
+            <p class="lead text-center text-muted">Выберите идеальный автомобиль для вашей поездки</p>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <!-- Search -->
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Поиск</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ search_query }}" placeholder="Марка, модель...">
+                        </div>
+                        
+                        <!-- Brand Filter -->
+                        <div class="col-md-2">
+                            <label for="brand" class="form-label">Марка</label>
+                            <select class="form-select" id="brand" name="brand">
+                                <option value="">Все марки</option>
+                                {% for brand in brands %}
+                                    <option value="{{ brand }}" {% if current_filters.brand == brand %}selected{% endif %}>
+                                        {{ brand }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Fuel Type Filter -->
+                        <div class="col-md-2">
+                            <label for="fuel_type" class="form-label">Топливо</label>
+                            <select class="form-select" id="fuel_type" name="fuel_type">
+                                <option value="">Любое</option>
+                                <option value="petrol" {% if current_filters.fuel_type == 'petrol' %}selected{% endif %}>Бензин</option>
+                                <option value="diesel" {% if current_filters.fuel_type == 'diesel' %}selected{% endif %}>Дизель</option>
+                                <option value="electric" {% if current_filters.fuel_type == 'electric' %}selected{% endif %}>Электро</option>
+                                <option value="hybrid" {% if current_filters.fuel_type == 'hybrid' %}selected{% endif %}>Гибрид</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Transmission Filter -->
+                        <div class="col-md-2">
+                            <label for="transmission" class="form-label">КПП</label>
+                            <select class="form-select" id="transmission" name="transmission">
+                                <option value="">Любая</option>
+                                <option value="manual" {% if current_filters.transmission == 'manual' %}selected{% endif %}>Механическая</option>
+                                <option value="automatic" {% if current_filters.transmission == 'automatic' %}selected{% endif %}>Автоматическая</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Sort -->
+                        <div class="col-md-2">
+                            <label for="sort" class="form-label">Сортировка</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value="created_at" {% if current_filters.sort == 'created_at' %}selected{% endif %}>По дате</option>
+                                <option value="price_asc" {% if current_filters.sort == 'price_asc' %}selected{% endif %}>Цена ↑</option>
+                                <option value="price_desc" {% if current_filters.sort == 'price_desc' %}selected{% endif %}>Цена ↓</option>
+                                <option value="year_desc" {% if current_filters.sort == 'year_desc' %}selected{% endif %}>Год ↓</option>
+                                <option value="mileage_asc" {% if current_filters.sort == 'mileage_asc' %}selected{% endif %}>Пробег ↑</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Price Range -->
+                        <div class="col-md-3">
+                            <label class="form-label">Цена за день (₽)</label>
+                            <div class="row g-1">
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" name="price_from" 
+                                           value="{{ current_filters.price_from }}" placeholder="От">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" name="price_to" 
+                                           value="{{ current_filters.price_to }}" placeholder="До">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Year Range -->
+                        <div class="col-md-3">
+                            <label class="form-label">Год выпуска</label>
+                            <div class="row g-1">
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" name="year_from" 
+                                           value="{{ current_filters.year_from }}" placeholder="От">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" name="year_to" 
+                                           value="{{ current_filters.year_to }}" placeholder="До">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Mileage Range -->
+                        <div class="col-md-3">
+                            <label class="form-label">Пробег (км)</label>
+                            <div class="row g-1">
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" name="mileage_from" 
+                                           value="{{ current_filters.mileage_from }}" placeholder="От">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" name="mileage_to" 
+                                           value="{{ current_filters.mileage_to }}" placeholder="До">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i>Найти
+                            </button>
+                            <a href="{% url 'car_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Сбросить
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cars Grid -->
+    <div class="row">
+        {% for car in page_obj %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm car-card">
+                    <!-- Car Image -->
+                    <div class="car-image-container">
+                        {% if car.images.first %}
+                            <img src="{{ car.images.first.image.url }}" class="card-img-top car-image" alt="{{ car.brand }} {{ car.model }}">
+                        {% else %}
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-car fa-3x text-muted"></i>
+                            </div>
+                        {% endif %}
+                        <div class="car-overlay">
+                            <a href="{% url 'car_detail' car.pk %}" class="btn btn-primary">
+                                <i class="fas fa-eye me-1"></i>Подробнее
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Car Info -->
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold">{{ car.brand }} {{ car.model }}</h5>
+                        
+                        <div class="car-specs mb-3">
+                            <div class="row g-2 text-muted small">
+                                <div class="col-6">
+                                    <i class="fas fa-calendar me-1"></i>{{ car.year }} г.
+                                </div>
+                                <div class="col-6">
+                                    <i class="fas fa-road me-1"></i>{{ car.mileage|floatformat:0 }} км
+                                </div>
+                                <div class="col-6">
+                                    <i class="fas fa-gas-pump me-1"></i>{{ car.get_fuel_type_display }}
+                                </div>
+                                <div class="col-6">
+                                    <i class="fas fa-cogs me-1"></i>{{ car.get_transmission_display }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-auto">
+                            <div class="price-info mb-3">
+                                <div class="h5 text-primary mb-1">{{ car.price_per_day|floatformat:0 }} ₽/день</div>
+                                <div class="small text-muted">
+                                    {{ car.price_per_week|floatformat:0 }} ₽/неделя • {{ car.price_per_month|floatformat:0 }} ₽/месяц
+                                </div>
+                            </div>
+                            
+                            <a href="{% url 'car_detail' car.pk %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-car me-1"></i>Арендовать
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Автомобили не найдены</h4>
+                    <p class="text-muted">Попробуйте изменить параметры поиска</p>
+                    <a href="{% url 'car_list' %}" class="btn btn-primary">Сбросить фильтры</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="Навигация по страницам">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
